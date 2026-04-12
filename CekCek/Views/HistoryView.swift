@@ -55,7 +55,9 @@ struct HistoryView: View {
                 }
             }
         }
+        #if os(macOS)
         .frame(minWidth: 480, minHeight: 360)
+        #endif
         .sheet(item: $selectedRecord) { record in
             CompletionDetailView(record: record)
         }

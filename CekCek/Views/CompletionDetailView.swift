@@ -64,6 +64,8 @@ struct CompletionDetailView: View {
                 }
             }
         }
+        #if os(macOS)
         .frame(minWidth: 480, minHeight: 360)
+        #endif
     }
 }
