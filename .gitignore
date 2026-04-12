@@ -3,3 +3,7 @@
 # Xcode user-specific state
 *.xcuserstate
 xcuserdata/
+.derivedData/
+
+# Editor-local settings
+.vscode/
