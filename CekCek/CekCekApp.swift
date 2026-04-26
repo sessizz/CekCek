@@ -8,8 +8,10 @@ struct CekCekApp: App {
     #endif
 
     let modelContainer: ModelContainer
+    let cloudKitSyncMonitor: CloudKitSyncMonitor
 
     init() {
+        let syncMonitor = CloudKitSyncMonitor()
         let container: ModelContainer
         do {
             container = try ModelContainer(
@@ -21,8 +23,10 @@ struct CekCekApp: App {
                     cloudKitDatabase: .automatic
                 )
             )
+            syncMonitor.setStartupResult(mode: .cloudKit)
         } catch {
             print("CloudKit ModelContainer failed: \(error)")
+            syncMonitor.setStartupResult(mode: .localFallback, error: error)
             do {
                 container = try ModelContainer(
                     for: Checklist.self,
@@ -35,6 +39,7 @@ struct CekCekApp: App {
                 )
             } catch {
                 print("Local ModelContainer failed: \(error)")
+                syncMonitor.setStartupResult(mode: .inMemoryFallback, error: error)
                 container = try! ModelContainer(
                     for: Checklist.self,
                     ChecklistItem.self,
@@ -48,6 +53,7 @@ struct CekCekApp: App {
             }
         }
 
+        self.cloudKitSyncMonitor = syncMonitor
         self.modelContainer = container
         let context = ModelContext(container)
         DefaultDataSeeder.seedIfNeeded(context: context)
@@ -56,6 +62,10 @@ struct CekCekApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(cloudKitSyncMonitor)
+                #if os(macOS)
+                .handlesExternalEvents(preferring: Set(arrayLiteral: "file"), allowing: Set(arrayLiteral: "file"))
+                #endif
                 .onAppear {
                     #if os(macOS)
                     NSApplication.shared.registerForRemoteNotifications()
@@ -64,6 +74,9 @@ struct CekCekApp: App {
                     #endif
                 }
         }
+        #if os(macOS)
+        .handlesExternalEvents(matching: Set(arrayLiteral: "file"))
+        #endif
         .modelContainer(modelContainer)
     }
 }

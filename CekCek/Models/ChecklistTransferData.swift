@@ -2,14 +2,15 @@ import Foundation
 import UniformTypeIdentifiers
 import CoreTransferable
 
-struct ChecklistTransferData: Codable {
+struct ChecklistTransferData: Codable, Sendable {
     let version: Int
+    let id: UUID
     let title: String
     let iconName: String
     let items: [ChecklistItemTransferData]
 }
 
-struct ChecklistItemTransferData: Codable {
+struct ChecklistItemTransferData: Codable, Sendable {
     let title: String
     let sortOrder: Int
 }
@@ -48,20 +49,3 @@ extension ChecklistTransferData {
     }
 }
 
-// MARK: - Checklist convenience
-
-extension Checklist {
-    var transferData: ChecklistTransferData {
-        ChecklistTransferData(
-            version: 1,
-            title: displayTitle,
-            iconName: iconName,
-            items: sortedItems.map { item in
-                ChecklistItemTransferData(
-                    title: item.displayTitle,
-                    sortOrder: item.sortOrder
-                )
-            }
-        )
-    }
-}

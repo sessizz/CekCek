@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 import CoreData
 
@@ -11,7 +12,8 @@ struct CloudKitSyncRefresh: ViewModifier {
             .id(refreshID)
             .onReceive(NotificationCenter.default.publisher(
                 for: NSPersistentCloudKitContainer.eventChangedNotification
-            )) { notification in
+            )
+            .receive(on: RunLoop.main)) { notification in
                 guard let event = notification.userInfo?[
                     NSPersistentCloudKitContainer.eventNotificationUserInfoKey
                 ] as? NSPersistentCloudKitContainer.Event else { return }
