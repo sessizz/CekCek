@@ -2,17 +2,17 @@
 
 ![CekCek App Icon](CekCek/Assets.xcassets/AppIcon.appiconset/AppIcon-light.png)
 
-**CekCek**, karavan ve RV sahipleri için hazırlanmış, bakım ve hazırlık listelerini yönetmeye odaklanan yerel bir iOS/macOS uygulamasıdır.  
+**CekCek**, tekrar eden iş akışlarını, hazırlık süreçlerini ve kişisel kontrol listelerini düzenlemek için geliştirilmiş yerel bir iOS/macOS checklist uygulamasıdır.  
 SwiftUI ve SwiftData ile geliştirilmiştir; harici bir backend zorunluluğu olmadan çalışır.
 
 ## Ne İşe Yarıyor?
 
 CekCek, tekrar eden kontrol süreçlerini daha düzenli hale getirmek için tasarlandı:
 
-- yol öncesi kontrol listeleri
-- kamp alanı varış / ayrılış rutinleri
-- periyodik bakım maddeleri
-- kullanıcıya özel checklist senaryoları
+- günlük görev rutinleri
+- seyahat ve hazırlık listeleri
+- bakım ve kontrol akışları
+- ekip veya kişisel kullanım için özel checklist senaryoları
 
 Uygulama varsayılan checklist’lerle başlar, ama tüm yapı kullanıcı tarafından düzenlenebilir, paylaşılabilir ve içe aktarılabilir.
 
@@ -20,13 +20,36 @@ Uygulama varsayılan checklist’lerle başlar, ama tüm yapı kullanıcı taraf
 
 - SwiftData tabanlı yerel veri saklama
 - CloudKit destekli senkronizasyon ve hata durumlarında yerel fallback
-- İlk açılışta otomatik varsayılan RV checklist’leri
+- İlk açılışta otomatik varsayılan checklist’ler
 - Özel checklist oluşturma ve mevcut checklist’leri düzenleme
 - Checklist öğesi ekleme, düzenleme, silme ve sıralama
 - Tamamlanma geçmişi kaydı
 - Checklist paylaşımı ve dosyadan içe aktarma
 - iPhone, iPad ve macOS için native SwiftUI arayüzü
 - Türkçe ve İngilizce lokalizasyon desteği
+
+## Marketplace Yol Haritası
+
+Projede ayrıca topluluk odaklı bir **CekCek Marketplace** geliştirmesi planlanıyor.
+
+Bu yapı ile kullanıcılar:
+
+- hazırladıkları checklist’leri topluluğa yayınlayabilecek
+- başka kullanıcıların checklist’lerini keşfedip indirebilecek
+- kategori bazlı gezinebilecek
+- puanlama ve yorumlarla kaliteli içerikleri öne çıkarabilecek
+
+`marketplace.md` içindeki plana göre bu geliştirme; Supabase tabanlı bir backend, Edge Functions, iCloud kimliğiyle sürtünmesiz giriş yaklaşımı ve uygulama içinde yeni bir marketplace deneyimi içeriyor.
+
+Öngörülen başlıklar:
+
+- checklist yayınlama
+- arama ve kategori bazlı keşif
+- indirme ve yerel kopya olarak kullanma
+- puanlama, yorum ve raporlama
+- kullanıcı profili ve yayın geçmişi
+
+Kısacası CekCek, yalnızca kişisel checklist tutan bir uygulama olmaktan çıkıp topluluk tarafından beslenen bir checklist ekosistemine dönüşecek şekilde tasarlanıyor.
 
 ## Teknoloji Yığını
 
@@ -61,6 +84,7 @@ CekCek/
 - `DefaultDataSeeder`: varsayılan verileri ilk kurulumda ekler
 - `ChecklistImporter`: dışa aktarılan checklist dosyalarını içe alır
 - `CloudKitSyncMonitor`: senkronizasyon durumunu takip eder
+- `marketplace.md`: marketplace mimarisi ve ürün planı
 
 ## Kurulum
 
@@ -116,7 +140,7 @@ Bu yaklaşım, uygulamanın hata durumlarında da açılabilir ve kullanılabili
 
 ## Durum
 
-Proje aktif olarak native Apple platformları odağında geliştirilmektedir. Kod tabanı, dış bağımlılıklardan kaçınan sade bir yapı üzerine kuruludur.
+Proje aktif olarak native Apple platformları odağında geliştirilmektedir. Mevcut uygulama sade ve yerel bir checklist deneyimi sunarken, bir sonraki büyük evrim olarak marketplace katmanı planlanmaktadır.
 
 ## Katkı
 
