@@ -4,9 +4,14 @@ import SwiftData
 struct ChecklistListView: View {
     @Query(sort: \Checklist.sortOrder) private var checklists: [Checklist]
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var cloudKitSyncMonitor: CloudKitSyncMonitor
     @Binding var selectedChecklist: Checklist?
     @State private var showingAddSheet = false
     @State private var editingChecklist: Checklist?
+    @State private var showingCloudKitStatus = false
+    #if os(iOS)
+    @State private var editMode = EditMode.inactive
+    #endif
 
     var body: some View {
         List(selection: $selectedChecklist) {
@@ -52,7 +57,7 @@ struct ChecklistListView: View {
                     } label: {
                         Label(String(localized: "common.edit"), systemImage: "pencil")
                     }
-                    .tint(.orange)
+                    .tint(Color.accentColor)
                 }
                 .contextMenu {
                     Button {
@@ -83,9 +88,45 @@ struct ChecklistListView: View {
                     }
                 }
             }
+            .onMove(perform: move)
         }
-        .navigationTitle(String(localized: "app.title"))
+        #if os(iOS)
+        .environment(\.editMode, $editMode)
+        .listSectionSpacing(0)
+        #endif
+        .navigationTitle("")
+        #if os(iOS)
+        .navigationBarTitleDisplayMode(.inline)
+        #endif
         .toolbar {
+            #if os(iOS)
+            ToolbarItem(placement: .principal) {
+                CekCekLogoView()
+            }
+            #endif
+
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showingCloudKitStatus = true
+                } label: {
+                    Image(systemName: cloudKitStatusIconName)
+                }
+                .help(cloudKitSyncMonitor.statusTitle)
+            }
+
+            #if os(iOS)
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    withAnimation {
+                        editMode = editMode == .active ? .inactive : .active
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                        .foregroundStyle(editMode == .active ? Color.accentColor : Color.primary)
+                }
+            }
+            #endif
+
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     showingAddSheet = true
@@ -100,9 +141,35 @@ struct ChecklistListView: View {
         .sheet(item: $editingChecklist) { checklist in
             EditChecklistSheet(checklist: checklist)
         }
+        .sheet(isPresented: $showingCloudKitStatus) {
+            CloudKitStatusSheet()
+                .environmentObject(cloudKitSyncMonitor)
+        }
         .onChange(of: checklists.count) {
             DefaultDataSeeder.deduplicateDefaults(context: modelContext)
         }
         .cloudKitSyncRefresh()
+    }
+}
+
+private extension ChecklistListView {
+    func move(from source: IndexSet, to destination: Int) {
+        var reordered = checklists
+        reordered.move(fromOffsets: source, toOffset: destination)
+        for (index, checklist) in reordered.enumerated() {
+            checklist.sortOrder = index
+        }
+    }
+
+    var cloudKitStatusIconName: String {
+        if cloudKitSyncMonitor.isSyncInProgress {
+            return "arrow.triangle.2.circlepath.icloud"
+        }
+
+        if cloudKitSyncMonitor.shouldShowIssueBanner {
+            return "exclamationmark.icloud"
+        }
+
+        return "checkmark.icloud"
     }
 }

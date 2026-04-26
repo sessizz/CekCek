@@ -7,28 +7,56 @@ struct ChecklistDetailView: View {
     @State private var showingAddItem = false
     @State private var showingHistory = false
     @State private var editingItem: ChecklistItem?
+    @State private var quickAddText = ""
+    #if os(iOS)
+    @State private var editMode = EditMode.inactive
+    #endif
 
     var body: some View {
         List {
+            // ── Header: ring + title + linear progress bar ──────────────
             Section {
-                HStack {
-                    ProgressRingView(progress: checklist.progress, size: 56, lineWidth: 6)
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .center) {
+                        ProgressRingView(progress: checklist.progress, size: 52, lineWidth: 5)
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(checklist.displayTitle)
-                            .font(.title2.bold())
-                        Text(String(localized: "checklist.progressLabel \(checklist.checkedCount) \(checklist.totalCount)"))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(checklist.displayTitle)
+                                .font(.title2.bold())
+                            Text(String(localized: "checklist.progressLabel \(checklist.checkedCount) \(checklist.totalCount)"))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.leading, 10)
+
+                        Spacer()
                     }
-                    .padding(.leading, 8)
 
-                    Spacer()
+                    // Linear progress bar
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.secondary.opacity(0.15))
+                                .frame(height: 6)
+                            Capsule()
+                                .fill(Color.accentColor)
+                                .frame(
+                                    width: geo.size.width * checklist.progress,
+                                    height: 6
+                                )
+                                .animation(
+                                    .spring(response: 0.35, dampingFraction: 0.7),
+                                    value: checklist.progress
+                                )
+                        }
+                    }
+                    .frame(height: 6)
                 }
                 .padding(.vertical, 8)
                 .listRowSeparator(.hidden)
             }
 
+            // ── Items ────────────────────────────────────────────────────
             Section {
                 ForEach(checklist.sortedItems) { item in
                     ChecklistItemRowView(item: item)
@@ -47,12 +75,26 @@ struct ChecklistDetailView: View {
                             } label: {
                                 Label(String(localized: "common.edit"), systemImage: "pencil")
                             }
-                            .tint(.orange)
+                            .tint(Color.accentColor.opacity(0.85))
                         }
                 }
+                .onMove(perform: moveItems)
             }
         }
+        #if os(iOS)
+        .environment(\.editMode, $editMode)
+        #endif
         .listStyle(.inset)
+        // ── Floating add bar (iOS only) ──────────────────────────────────
+        #if os(iOS)
+        .safeAreaInset(edge: .bottom) {
+            FloatingAddBar(text: $quickAddText) {
+                quickAddItem()
+            } onAdd: {
+                showingAddItem = true
+            }
+        }
+        #endif
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {
@@ -60,12 +102,23 @@ struct ChecklistDetailView: View {
                 } label: {
                     Label(String(localized: "checklist.history"), systemImage: "clock.arrow.circlepath")
                 }
-
+                #if os(iOS)
+                Button {
+                    withAnimation {
+                        editMode = editMode == .active ? .inactive : .active
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                        .foregroundStyle(editMode == .active ? Color.accentColor : Color.primary)
+                }
+                #endif
+                #if os(macOS)
                 Button {
                     showingAddItem = true
                 } label: {
                     Label(String(localized: "checklist.addItem"), systemImage: "plus")
                 }
+                #endif
             }
 
             ToolbarItemGroup(placement: .secondaryAction) {
@@ -120,6 +173,25 @@ struct ChecklistDetailView: View {
     private func resetAll() {
         for item in checklist.items ?? [] {
             item.isChecked = false
+        }
+    }
+
+    private func quickAddItem() {
+        let title = quickAddText.trimmingCharacters(in: .whitespaces)
+        guard !title.isEmpty else { return }
+        let maxOrder = (checklist.items ?? []).map(\.sortOrder).max() ?? -1
+        let item = ChecklistItem(titleKey: "", sortOrder: maxOrder + 1, isDefault: false)
+        item.customTitle = title
+        item.checklist = checklist
+        modelContext.insert(item)
+        quickAddText = ""
+    }
+
+    private func moveItems(from source: IndexSet, to destination: Int) {
+        var reordered = checklist.sortedItems
+        reordered.move(fromOffsets: source, toOffset: destination)
+        for (index, item) in reordered.enumerated() {
+            item.sortOrder = index
         }
     }
 }

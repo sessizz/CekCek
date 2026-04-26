@@ -7,13 +7,6 @@ struct AddChecklistSheet: View {
     @State private var title = ""
     @State private var selectedIcon = "checklist"
 
-    private let iconOptions = [
-        "checklist", "car.side", "tent", "arrow.right.circle",
-        "snowflake", "sun.max", "wrench.and.screwdriver",
-        "star", "heart", "flag", "bolt", "gear",
-        "list.bullet", "doc.text", "folder"
-    ]
-
     var body: some View {
         NavigationStack {
             Form {
@@ -22,27 +15,8 @@ struct AddChecklistSheet: View {
                 }
 
                 Section(String(localized: "addChecklist.iconSection")) {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 16) {
-                        ForEach(iconOptions, id: \.self) { icon in
-                            Button {
-                                selectedIcon = icon
-                            } label: {
-                                Image(systemName: icon)
-                                    .font(.title2)
-                                    .frame(width: 44, height: 44)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(selectedIcon == icon ? Color.accentColor.opacity(0.2) : Color.clear)
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(selectedIcon == icon ? Color.accentColor : Color.clear, lineWidth: 2)
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.vertical, 8)
+                    IconPickerGrid(selectedIcon: $selectedIcon)
+                        .padding(.vertical, 4)
                 }
             }
             .navigationTitle(String(localized: "addChecklist.title"))

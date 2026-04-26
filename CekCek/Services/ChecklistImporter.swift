@@ -3,11 +3,14 @@ import SwiftData
 
 enum ImportError: LocalizedError {
     case wrongFileType
+    case duplicate(title: String)
 
     var errorDescription: String? {
         switch self {
         case .wrongFileType:
             return String(localized: "import.wrongFileType")
+        case .duplicate(let title):
+            return String(localized: "import.duplicate \(title)")
         }
     }
 }
@@ -22,6 +25,15 @@ enum ChecklistImporter {
         let data = try Data(contentsOf: url)
         let transfer = try JSONDecoder().decode(ChecklistTransferData.self, from: data)
 
+        // Duplicate check by UUID
+        let transferID = transfer.id
+        let duplicateDescriptor = FetchDescriptor<Checklist>(
+            predicate: #Predicate { $0.id == transferID }
+        )
+        if (try? context.fetchCount(duplicateDescriptor)) ?? 0 > 0 {
+            throw ImportError.duplicate(title: transfer.title)
+        }
+
         // Place after all existing checklists
         let descriptor = FetchDescriptor<Checklist>(
             sortBy: [SortDescriptor(\.sortOrder, order: .reverse)]
@@ -34,6 +46,7 @@ enum ChecklistImporter {
             sortOrder: maxOrder + 1,
             isDefault: false
         )
+        checklist.id = transfer.id
         checklist.customTitle = transfer.title
         context.insert(checklist)
 

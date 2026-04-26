@@ -4,6 +4,7 @@ import SwiftData
 struct ContentView: View {
     @State private var selectedChecklist: Checklist?
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var cloudKitSyncMonitor: CloudKitSyncMonitor
     @State private var showImportSuccess = false
     @State private var showImportError = false
     @State private var importErrorMessage = ""
@@ -23,6 +24,11 @@ struct ContentView: View {
         }
         .onOpenURL { url in
             handleImport(url: url)
+        }
+        .safeAreaInset(edge: .top) {
+            if cloudKitSyncMonitor.shouldShowIssueBanner {
+                CloudKitStatusBanner()
+            }
         }
         #if os(iOS)
         .onReceive(NotificationCenter.default.publisher(for: .cekcekFileOpened)) { notification in
@@ -57,4 +63,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .modelContainer(for: [Checklist.self, ChecklistItem.self, CompletionRecord.self], inMemory: true)
+        .environmentObject(CloudKitSyncMonitor())
 }
