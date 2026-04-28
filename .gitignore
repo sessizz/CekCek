@@ -7,3 +7,6 @@ xcuserdata/
 
 # Editor-local settings
 .vscode/
+
+# Supabase local CLI state
+supabase/.temp/

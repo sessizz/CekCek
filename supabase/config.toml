@@ -1,0 +1,7 @@
+project_id = "cekcek"
+
+[functions.marketplace-auth]
+verify_jwt = false
+
+[functions.marketplace]
+verify_jwt = false

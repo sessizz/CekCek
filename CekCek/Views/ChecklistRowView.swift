@@ -36,6 +36,12 @@ struct ChecklistRowView: View {
             .frame(width: 36, height: 36)
             .background(checklist.iconName.isEmoji ? Color.clear : Color.accentColor)
             .clipShape(RoundedRectangle(cornerRadius: 9))
+            .shadow(
+                color: (checklist.marketplaceSourceId != nil || checklist.marketplacePublishedId != nil)
+                    ? Color(red: 1.0, green: 0.78, blue: 0.1).opacity(0.75)
+                    : .clear,
+                radius: 8, x: 0, y: 2
+            )
 
             // Title + subtitle
             VStack(alignment: .leading, spacing: 3) {

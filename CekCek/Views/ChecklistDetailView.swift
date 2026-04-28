@@ -6,6 +6,8 @@ struct ChecklistDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showingAddItem = false
     @State private var showingHistory = false
+    @State private var showingMarketplaceUpload = false
+    @State private var showingMarketplaceInfo = false
     @State private var editingItem: ChecklistItem?
     @State private var quickAddText = ""
     #if os(iOS)
@@ -97,6 +99,15 @@ struct ChecklistDetailView: View {
         #endif
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                if checklist.marketplaceSourceId != nil || checklist.marketplacePublishedId != nil {
+                    Button {
+                        showingMarketplaceInfo = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                    }
+                    .accessibilityLabel(String(localized: "marketplace.info.title"))
+                }
+
                 Button {
                     showingHistory = true
                 } label: {
@@ -133,6 +144,13 @@ struct ChecklistDetailView: View {
                 } label: {
                     Label(String(localized: "checklist.resetAll"), systemImage: "arrow.counterclockwise")
                 }
+
+                Button {
+                    showingMarketplaceUpload = true
+                } label: {
+                    Label(String(localized: "marketplace.upload.publish"), systemImage: "square.and.arrow.up")
+                }
+                .disabled(checklist.sortedItems.isEmpty)
             }
         }
         .sheet(isPresented: $showingAddItem) {
@@ -143,6 +161,15 @@ struct ChecklistDetailView: View {
         }
         .sheet(isPresented: $showingHistory) {
             HistoryView(checklist: checklist)
+        }
+        .sheet(isPresented: $showingMarketplaceUpload) {
+            MarketplaceUploadView(checklist: checklist)
+        }
+        .sheet(isPresented: $showingMarketplaceInfo) {
+            let marketplaceId = checklist.marketplaceSourceId ?? checklist.marketplacePublishedId
+            if let marketplaceId {
+                MarketplaceInfoSheet(marketplaceSourceId: marketplaceId)
+            }
         }
         .cloudKitSyncRefresh()
     }

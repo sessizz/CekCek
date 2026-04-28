@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(update-config)",
+      "Bash(python3:*)",
+      "Bash(qlmanage -t -s 400 \"/Users/alper/Documents/Repo/CekCek/CekCek/Assets.xcassets/AppIcon.appiconset/AppIcon-light.png\" -o /tmp/)",
+      "Bash(ls /tmp/*.png)",
+      "Bash(cp \"/Users/alper/.claude/projects/-Users-alper-Documents-Repo-CekCek/9cbbfba5-e2e5-4afd-a03f-c85781202679/tool-results/webfetch-1776493641928-om8dcv.bin\" /tmp/design.gz)",
+      "Bash(gunzip -c /tmp/design.gz)",
+      "Read(//tmp/**)"
+    ]
+  }
+}
