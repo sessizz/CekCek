@@ -5,6 +5,8 @@ enum ImportError: LocalizedError {
     case wrongFileType
     case duplicate(title: String)
     case marketplaceMissingItems
+    case invalidFile
+    case unsupportedVersion(Int)
 
     var errorDescription: String? {
         switch self {
@@ -14,6 +16,10 @@ enum ImportError: LocalizedError {
             return String(localized: "import.duplicate \(title)")
         case .marketplaceMissingItems:
             return String(localized: "marketplace.error.missingItems")
+        case .invalidFile:
+            return String(localized: "import.invalidFile")
+        case .unsupportedVersion(let version):
+            return String(localized: "import.unsupportedVersion \(version)")
         }
     }
 }
@@ -25,8 +31,21 @@ enum ChecklistImporter {
             if accessing { url.stopAccessingSecurityScopedResource() }
         }
 
+        guard url.pathExtension.lowercased() == "cekcek" else {
+            throw ImportError.wrongFileType
+        }
+
         let data = try Data(contentsOf: url)
-        let transfer = try JSONDecoder().decode(ChecklistTransferData.self, from: data)
+        let transfer: ChecklistTransferData
+        do {
+            transfer = try JSONDecoder().decode(ChecklistTransferData.self, from: data)
+        } catch {
+            throw ImportError.invalidFile
+        }
+
+        guard transfer.version == 1 else {
+            throw ImportError.unsupportedVersion(transfer.version)
+        }
 
         // Duplicate check by UUID
         let transferID = transfer.id

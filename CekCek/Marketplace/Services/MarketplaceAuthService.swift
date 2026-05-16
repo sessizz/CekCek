@@ -143,6 +143,12 @@ final class MarketplaceAuthService: ObservableObject {
         }
 
         guard (200..<300).contains(httpResponse.statusCode) else {
+            if let serverError = try? decoder.decode(MarketplaceServerErrorResponse.self, from: data) {
+                throw MarketplaceAuthError.serverMessage(
+                    statusCode: httpResponse.statusCode,
+                    message: serverError.error.message
+                )
+            }
             throw MarketplaceAuthError.serverStatus(httpResponse.statusCode)
         }
 
@@ -155,7 +161,10 @@ final class MarketplaceAuthService: ObservableObject {
         currentUser = response.marketplaceUser
         state = .authenticated
         lastErrorMessage = nil
-        MarketplaceTokenStore.saveToken(response.accessToken)
+        let tokenStatus = MarketplaceTokenStore.saveToken(response.accessToken)
+        if tokenStatus != errSecSuccess {
+            lastErrorMessage = String(localized: "marketplace.auth.keychainSaveFailed \(Int(tokenStatus))")
+        }
         if let expiresAt {
             UserDefaults.standard.set(expiresAt, forKey: MarketplaceTokenStore.expiresAtKey)
         }
@@ -188,6 +197,7 @@ enum MarketplaceAuthError: LocalizedError {
     case configurationMissing
     case invalidResponse
     case serverStatus(Int)
+    case serverMessage(statusCode: Int, message: String)
 
     var errorDescription: String? {
         switch self {
@@ -199,6 +209,8 @@ enum MarketplaceAuthError: LocalizedError {
             return String(localized: "marketplace.error.invalidResponse")
         case .serverStatus(let statusCode):
             return String(localized: "marketplace.error.serverStatus \(statusCode)")
+        case .serverMessage(_, let message):
+            return message
         }
     }
 }
@@ -254,13 +266,13 @@ private enum MarketplaceTokenStore {
         return String(data: data, encoding: .utf8)
     }
 
-    static func saveToken(_ token: String) {
+    static func saveToken(_ token: String) -> OSStatus {
         deleteToken()
 
         var query = baseQuery
         query[kSecValueData as String] = Data(token.utf8)
         query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        SecItemAdd(query as CFDictionary, nil)
+        return SecItemAdd(query as CFDictionary, nil)
     }
 
     static func deleteToken() {

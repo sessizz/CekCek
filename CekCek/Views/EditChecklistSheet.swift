@@ -42,10 +42,7 @@ struct EditChecklistSheet: View {
     private func save() {
         checklist.customTitle = title.trimmingCharacters(in: .whitespaces)
         checklist.iconName = selectedIcon
-        // Clear titleKey so displayTitle uses customTitle
-        if !checklist.customTitle!.isEmpty {
-            checklist.titleKey = ""
-        }
+        // Keep titleKey so default checklist localization can be restored if customTitle is cleared later.
         dismiss()
     }
 }

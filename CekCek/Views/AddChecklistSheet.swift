@@ -40,10 +40,15 @@ struct AddChecklistSheet: View {
     }
 
     private func save() {
+        let descriptor = FetchDescriptor<Checklist>(
+            sortBy: [SortDescriptor(\.sortOrder, order: .reverse)]
+        )
+        let maxOrder = (try? modelContext.fetch(descriptor).first?.sortOrder) ?? -1
+
         let checklist = Checklist(
             titleKey: "",
             iconName: selectedIcon,
-            sortOrder: 999,
+            sortOrder: maxOrder + 1,
             isDefault: false
         )
         checklist.customTitle = title.trimmingCharacters(in: .whitespaces)

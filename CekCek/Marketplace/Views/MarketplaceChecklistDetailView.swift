@@ -17,6 +17,7 @@ struct MarketplaceChecklistDetailView: View {
     @State private var showDownloadError = false
     @State private var downloadErrorMessage = ""
     @State private var didDownload = false
+    @State private var isShowingOptimisticDownloadCount = false
 
     // Rating
     @State private var pendingRating: Int = 0   // star user is hovering/tapping
@@ -84,7 +85,7 @@ struct MarketplaceChecklistDetailView: View {
                                     systemImage: "checklist"
                                 )
                                 Label(
-                                    "\(didDownload ? checklist.downloadCount : checklist.downloadCount)",
+                                    String(localized: "marketplace.downloadCount \(displayedDownloadCount(for: checklist))"),
                                     systemImage: "arrow.down.circle"
                                 )
                                 MarketplaceRatingSummary(
@@ -181,16 +182,16 @@ struct MarketplaceChecklistDetailView: View {
         } message: {
             Text(downloadErrorMessage)
         }
-        .onAppear {
-            guard checklist == nil && isLoading else { return }
-            Task { await loadChecklist() }
-        }
-        .task {
+        .task(id: checklistID) {
             await loadChecklist()
         }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
+
+    private func displayedDownloadCount(for checklist: MarketplaceChecklist) -> Int {
+        checklist.downloadCount + (isShowingOptimisticDownloadCount ? 1 : 0)
+    }
 
     private func starIcon(for star: Int) -> String {
         let active = pendingRating > 0 ? pendingRating : submittedRating
@@ -247,10 +248,14 @@ struct MarketplaceChecklistDetailView: View {
             let detail = try await apiService.downloadChecklist(id: checklistID, accessToken: token)
             try ChecklistImporter.importMarketplaceChecklist(detail, context: modelContext)
             didDownload = true
+            isShowingOptimisticDownloadCount = true
             showDownloadSuccess = true
             // Reload from server so the incremented download count is shown
-            // and stays consistent on future visits
+            // and stays consistent on future visits. Reset only the local optimistic
+            // count after the fresh server value arrives; keep the button in
+            // "download again" state for this screen session.
             await loadChecklist()
+            isShowingOptimisticDownloadCount = false
         } catch {
             downloadErrorMessage = error.localizedDescription
             showDownloadError = true

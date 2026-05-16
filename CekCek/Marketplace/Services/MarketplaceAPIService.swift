@@ -99,6 +99,15 @@ private struct MarketplaceMyRatingResponse: Decodable {
     let rating: Int?
 }
 
+struct MarketplaceServerErrorResponse: Decodable {
+    let error: MarketplaceServerError
+}
+
+struct MarketplaceServerError: Decodable {
+    let code: String
+    let message: String
+}
+
 enum MarketplaceClientFactory {
     static func makeClient() -> MarketplaceClient {
         let configuration = MarketplaceConfiguration.current
@@ -113,6 +122,7 @@ enum MarketplaceClientFactory {
 enum MarketplaceAPIError: LocalizedError {
     case invalidResponse
     case serverStatus(Int)
+    case serverMessage(statusCode: Int, message: String)
     case checklistNotFound
 
     var errorDescription: String? {
@@ -121,6 +131,8 @@ enum MarketplaceAPIError: LocalizedError {
             return String(localized: "marketplace.error.invalidResponse")
         case .serverStatus(let statusCode):
             return String(localized: "marketplace.error.serverStatus \(statusCode)")
+        case .serverMessage(_, let message):
+            return message
         case .checklistNotFound:
             return String(localized: "marketplace.error.notFound")
         }
@@ -239,6 +251,12 @@ final class HTTPMarketplaceClient: MarketplaceClient {
         }
 
         guard (200..<300).contains(httpResponse.statusCode) else {
+            if let serverError = try? decoder.decode(MarketplaceServerErrorResponse.self, from: data) {
+                throw MarketplaceAPIError.serverMessage(
+                    statusCode: httpResponse.statusCode,
+                    message: serverError.error.message
+                )
+            }
             throw MarketplaceAPIError.serverStatus(httpResponse.statusCode)
         }
 

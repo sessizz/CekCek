@@ -9,6 +9,7 @@ struct ChecklistListView: View {
     @State private var showingAddSheet = false
     @State private var editingChecklist: Checklist?
     @State private var showingCloudKitStatus = false
+    @State private var checklistPendingDeletion: Checklist?
     #if os(iOS)
     @State private var editMode = EditMode.inactive
     #endif
@@ -21,10 +22,7 @@ struct ChecklistListView: View {
                 }
                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                     Button(role: .destructive) {
-                        withAnimation {
-                            if selectedChecklist == checklist { selectedChecklist = nil }
-                            modelContext.delete(checklist)
-                        }
+                        checklistPendingDeletion = checklist
                     } label: {
                         Label(String(localized: "common.delete"), systemImage: "trash")
                     }
@@ -79,10 +77,7 @@ struct ChecklistListView: View {
                     Divider()
 
                     Button(role: .destructive) {
-                        withAnimation {
-                            if selectedChecklist == checklist { selectedChecklist = nil }
-                            modelContext.delete(checklist)
-                        }
+                        checklistPendingDeletion = checklist
                     } label: {
                         Label(String(localized: "common.delete"), systemImage: "trash")
                     }
@@ -145,6 +140,23 @@ struct ChecklistListView: View {
             CloudKitStatusSheet()
                 .environmentObject(cloudKitSyncMonitor)
         }
+        .confirmationDialog(
+            checklistPendingDeletion.map { String(localized: "checklist.deleteConfirmationTitle \($0.displayTitle)") } ?? String(localized: "checklist.deleteConfirmationTitle"),
+            isPresented: Binding(
+                get: { checklistPendingDeletion != nil },
+                set: { if !$0 { checklistPendingDeletion = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button(String(localized: "common.delete"), role: .destructive) {
+                confirmDeleteChecklist()
+            }
+            Button(String(localized: "common.cancel"), role: .cancel) {
+                checklistPendingDeletion = nil
+            }
+        } message: {
+            Text(String(localized: "checklist.deleteConfirmationMessage"))
+        }
         .onChange(of: checklists.count) {
             DefaultDataSeeder.deduplicateDefaults(context: modelContext)
         }
@@ -153,6 +165,15 @@ struct ChecklistListView: View {
 }
 
 private extension ChecklistListView {
+    func confirmDeleteChecklist() {
+        guard let checklist = checklistPendingDeletion else { return }
+        withAnimation {
+            if selectedChecklist == checklist { selectedChecklist = nil }
+            modelContext.delete(checklist)
+        }
+        checklistPendingDeletion = nil
+    }
+
     func move(from source: IndexSet, to destination: Int) {
         var reordered = checklists
         reordered.move(fromOffsets: source, toOffset: destination)

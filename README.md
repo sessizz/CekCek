@@ -28,9 +28,9 @@ Uygulama varsayılan checklist’lerle başlar, ama tüm yapı kullanıcı taraf
 - iPhone, iPad ve macOS için native SwiftUI arayüzü
 - Türkçe ve İngilizce lokalizasyon desteği
 
-## Marketplace Yol Haritası
+## Marketplace
 
-Projede ayrıca topluluk odaklı bir **CekCek Marketplace** geliştirmesi planlanıyor.
+Projede topluluk odaklı **CekCek Marketplace** katmanı da yer alır. Ana checklist deneyimi SwiftData ile yerel çalışır; marketplace özellikleri ise yapılandırılmış Supabase Edge Functions backend'ine bağlanır. Backend yapılandırması yoksa uygulama geliştirme ve demo amaçlı yerel örnek marketplace verilerine düşer.
 
 Bu yapı ile kullanıcılar:
 
@@ -39,17 +39,17 @@ Bu yapı ile kullanıcılar:
 - kategori bazlı gezinebilecek
 - puanlama ve yorumlarla kaliteli içerikleri öne çıkarabilecek
 
-`marketplace.md` içindeki plana göre bu geliştirme; Supabase tabanlı bir backend, Edge Functions, iCloud kimliğiyle sürtünmesiz giriş yaklaşımı ve uygulama içinde yeni bir marketplace deneyimi içeriyor.
+`marketplace.md` içindeki mimariye göre bu katman; Supabase tabanlı backend, Edge Functions, iCloud kimliğiyle sürtünmesiz giriş yaklaşımı ve uygulama içinde marketplace sekmesi içerir.
 
-Öngörülen başlıklar:
+Desteklenen başlıklar:
 
 - checklist yayınlama
 - arama ve kategori bazlı keşif
 - indirme ve yerel kopya olarak kullanma
-- puanlama, yorum ve raporlama
-- kullanıcı profili ve yayın geçmişi
+- puanlama
+- kullanıcı profili
 
-Kısacası CekCek, yalnızca kişisel checklist tutan bir uygulama olmaktan çıkıp topluluk tarafından beslenen bir checklist ekosistemine dönüşecek şekilde tasarlanıyor.
+Yorum, raporlama ve daha gelişmiş moderasyon akışları backend şemasında yer alsa da uygulama içinde kademeli olarak genişletilebilir.
 
 ## Teknoloji Yığını
 
@@ -58,6 +58,7 @@ Kısacası CekCek, yalnızca kişisel checklist tutan bir uygulama olmaktan çı
 - `CloudKit`
 - `LocalizedStringKey` tabanlı lokalizasyon
 - Xcode proje yapısı (`.xcodeproj`)
+- Marketplace için Supabase Edge Functions (opsiyonel backend)
 
 ## Platform Desteği
 
@@ -134,13 +135,13 @@ Mevcut diller:
 - Ana veri katmanı SwiftData’dır.
 - Uygulama CloudKit ile senkronizasyon başlatmayı dener.
 - CloudKit kullanılamazsa yerel kalıcı depolamaya düşer.
-- Kalıcı depolama da açılamazsa bellek içi fallback devreye girer.
+- Kalıcı depolama da açılamazsa bellek içi fallback devreye girer ve kullanıcı veri kaybı riski konusunda uyarılır.
 
-Bu yaklaşım, uygulamanın hata durumlarında da açılabilir ve kullanılabilir kalmasını sağlar.
+Bu yaklaşım, uygulamanın hata durumlarında da açılabilir ve kullanılabilir kalmasını sağlar; ancak bellek içi mod yalnızca geçici bir kurtarma modudur.
 
 ## Durum
 
-Proje aktif olarak native Apple platformları odağında geliştirilmektedir. Mevcut uygulama sade ve yerel bir checklist deneyimi sunarken, bir sonraki büyük evrim olarak marketplace katmanı planlanmaktadır.
+Proje aktif olarak native Apple platformları odağında geliştirilmektedir. Mevcut uygulama yerel checklist deneyimini korurken marketplace katmanını opsiyonel backend ile genişletir.
 
 ## Katkı
 

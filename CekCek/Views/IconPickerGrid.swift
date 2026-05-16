@@ -7,23 +7,23 @@ struct IconPickerGrid: View {
 
     // ── SF Symbols ──────────────────────────────────────────────
     private let symbolGroups: [(String, [String])] = [
-        ("Araç & Seyahat", [
+        ("iconGroup.vehicleTravel", [
             "car.side", "bus", "truck.box", "bicycle",
             "airplane", "ferry", "tram", "fuelpump",
             "road.lanes", "map", "location.circle", "compass.drawing",
         ]),
-        ("Kamp & Doğa", [
+        ("iconGroup.campingNature", [
             "tent", "mountain.2", "tree", "leaf",
             "flame", "drop", "wind", "snowflake",
             "sun.max", "cloud", "cloud.rain", "moon.stars",
         ]),
-        ("Araç & Gereç", [
+        ("iconGroup.tools", [
             "wrench.and.screwdriver", "hammer", "screwdriver",
             "bolt", "gear", "gearshape.2",
             "powerplug", "battery.100", "lightbulb", "flashlight.on.fill",
             "wrench", "archivebox",
         ]),
-        ("Genel", [
+        ("iconGroup.general", [
             "checklist", "list.bullet", "doc.text", "folder",
             "star", "heart", "flag", "bell",
             "calendar", "clock", "house", "person",
@@ -32,19 +32,19 @@ struct IconPickerGrid: View {
 
     // ── Emoji ────────────────────────────────────────────────────
     private let emojiGroups: [(String, [String])] = [
-        ("Araç & Seyahat", [
+        ("iconGroup.vehicleTravel", [
             "🚗","🚙","🚌","🚛","🚐","🛻","🏕️","🚑","🚒","🚓",
             "✈️","🚢","🛳️","🛤️","⛽","🗺️","🧭","📍",
         ]),
-        ("Kamp & Doğa", [
+        ("iconGroup.campingNature", [
             "⛺","🏔️","🌲","🌿","🍀","🔥","💧","❄️",
             "☀️","🌤️","🌧️","🌙","⭐","🌸","🍂","🌊",
         ]),
-        ("Araç & Gereç", [
+        ("iconGroup.tools", [
             "🔧","🔨","🪛","⚙️","🔩","🪜","🧰","🪝",
             "🔑","🗝️","💡","🔦","🧲","🪣","🧹","🪤",
         ]),
-        ("Genel", [
+        ("iconGroup.general", [
             "✅","📋","📝","📌","🎯","🏆","❤️","⭐",
             "🔔","📅","🏠","👤","💼","🎒","🧳","📦",
         ]),
@@ -56,7 +56,7 @@ struct IconPickerGrid: View {
             GroupBox {
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(symbolGroups, id: \.0) { group in
-                        Text(group.0)
+                        Text(String(localized: String.LocalizationValue(group.0)))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.top, 2)
@@ -74,7 +74,7 @@ struct IconPickerGrid: View {
                 }
                 .padding(.vertical, 4)
             } label: {
-                Label("SF Semboller", systemImage: "square.grid.2x2")
+                Label(String(localized: "iconPicker.sfSymbols"), systemImage: "square.grid.2x2")
                     .font(.subheadline.weight(.semibold))
             }
 
@@ -82,7 +82,7 @@ struct IconPickerGrid: View {
             GroupBox {
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(emojiGroups, id: \.0) { group in
-                        Text(group.0)
+                        Text(String(localized: String.LocalizationValue(group.0)))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.top, 2)
@@ -100,7 +100,7 @@ struct IconPickerGrid: View {
                 }
                 .padding(.vertical, 4)
             } label: {
-                Label("Emoji", systemImage: "face.smiling")
+                Label(String(localized: "iconPicker.emoji"), systemImage: "face.smiling")
                     .font(.subheadline.weight(.semibold))
             }
         }
