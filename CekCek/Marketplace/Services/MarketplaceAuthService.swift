@@ -65,18 +65,9 @@ final class MarketplaceAuthService: ObservableObject {
 
         do {
             let cloudKitUserId = try await fetchCloudKitUserId()
-            let displayName = UserDefaults.standard.string(forKey: "marketplaceDisplayName")
-                ?? String(localized: "marketplace.profile.defaultName")
+            let displayName = storedDisplayNameForLogin()
             let response = try await login(cloudKitUserId: cloudKitUserId, displayName: displayName)
-            accessToken = response.accessToken
-            expiresAt = Date(timeIntervalSince1970: TimeInterval(response.expiresAt))
-            currentUser = response.marketplaceUser
-            state = .authenticated
-            lastErrorMessage = nil
-            MarketplaceTokenStore.saveToken(response.accessToken)
-            if let expiresAt {
-                UserDefaults.standard.set(expiresAt, forKey: MarketplaceTokenStore.expiresAtKey)
-            }
+            applyLoginResponse(response)
             return response.accessToken
         } catch {
             state = .browseOnly
@@ -85,11 +76,26 @@ final class MarketplaceAuthService: ObservableObject {
         }
     }
 
-    func updateDisplayName(_ displayName: String) {
+    func updateDisplayName(_ displayName: String) async throws {
         let trimmed = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         UserDefaults.standard.set(trimmed, forKey: "marketplaceDisplayName")
-        currentUser?.displayName = trimmed
+
+        do {
+            let cloudKitUserId: String
+            if let currentCloudKitUserId = currentUser?.cloudKitUserId {
+                cloudKitUserId = currentCloudKitUserId
+            } else {
+                cloudKitUserId = try await fetchCloudKitUserId()
+            }
+
+            let response = try await login(cloudKitUserId: cloudKitUserId, displayName: trimmed)
+            applyLoginResponse(response)
+        } catch {
+            currentUser?.displayName = trimmed
+            lastErrorMessage = error.localizedDescription
+            throw error
+        }
     }
 
     private func fetchCloudKitUserId() async throws -> String {
@@ -110,7 +116,7 @@ final class MarketplaceAuthService: ObservableObject {
         }
     }
 
-    private func login(cloudKitUserId: String, displayName: String) async throws -> CloudKitLoginResponse {
+    private func login(cloudKitUserId: String, displayName: String?) async throws -> CloudKitLoginResponse {
         guard let baseURL = configuration.apiBaseURL else {
             throw MarketplaceAuthError.configurationMissing
         }
@@ -142,6 +148,39 @@ final class MarketplaceAuthService: ObservableObject {
 
         return try decoder.decode(CloudKitLoginResponse.self, from: data)
     }
+
+    private func applyLoginResponse(_ response: CloudKitLoginResponse) {
+        accessToken = response.accessToken
+        expiresAt = Date(timeIntervalSince1970: TimeInterval(response.expiresAt))
+        currentUser = response.marketplaceUser
+        state = .authenticated
+        lastErrorMessage = nil
+        MarketplaceTokenStore.saveToken(response.accessToken)
+        if let expiresAt {
+            UserDefaults.standard.set(expiresAt, forKey: MarketplaceTokenStore.expiresAtKey)
+        }
+    }
+
+    private func storedDisplayNameForLogin() -> String? {
+        guard let stored = UserDefaults.standard.string(forKey: "marketplaceDisplayName") else {
+            return nil
+        }
+
+        let trimmed = stored.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        let defaults = [
+            String(localized: "marketplace.profile.defaultName"),
+            "Anonymous",
+            "Anonim",
+        ].map { $0.lowercased(with: .current) }
+
+        if defaults.contains(trimmed.lowercased(with: .current)) {
+            return nil
+        }
+
+        return trimmed
+    }
 }
 
 enum MarketplaceAuthError: LocalizedError {
@@ -166,7 +205,7 @@ enum MarketplaceAuthError: LocalizedError {
 
 private struct CloudKitLoginRequest: Encodable {
     let cloudKitUserId: String
-    let displayName: String
+    let displayName: String?
 
     enum CodingKeys: String, CodingKey {
         case cloudKitUserId = "cloudkit_user_id"

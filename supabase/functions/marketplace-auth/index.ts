@@ -11,6 +11,7 @@ type CloudKitLoginRequest = {
 };
 
 const encoder = new TextEncoder();
+const defaultDisplayNames = new Set(["anonymous", "anonim"]);
 
 Deno.serve(async (req) => {
   const corsResponse = handleCors(req);
@@ -92,6 +93,10 @@ Deno.serve(async (req) => {
 function cleanDisplayName(displayName: string | undefined): string | undefined {
   const trimmed = displayName?.trim();
   if (!trimmed) {
+    return undefined;
+  }
+
+  if (defaultDisplayNames.has(trimmed.toLocaleLowerCase())) {
     return undefined;
   }
 

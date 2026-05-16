@@ -236,14 +236,15 @@ struct MarketplaceChecklistDetailView: View {
         let duplicateDescriptor = FetchDescriptor<Checklist>(
             predicate: #Predicate { $0.marketplaceSourceId == sourceId }
         )
-        if (try? modelContext.fetchCount(duplicateDescriptor) ?? 0) ?? 0 > 0 {
+        if (try? modelContext.fetchCount(duplicateDescriptor)) ?? 0 > 0 {
             downloadErrorMessage = ImportError.duplicate(title: checklist?.title ?? "").localizedDescription
             showDownloadError = true
             return
         }
 
         do {
-            let detail = try await apiService.downloadChecklist(id: checklistID)
+            let token = authService.currentTokenIfValid
+            let detail = try await apiService.downloadChecklist(id: checklistID, accessToken: token)
             try ChecklistImporter.importMarketplaceChecklist(detail, context: modelContext)
             didDownload = true
             showDownloadSuccess = true

@@ -375,23 +375,20 @@ async function updateChecklist(userId: string, checklistId: string, body: Publis
 async function recordDownload(userId: string | null, checklistId: string): Promise<void> {
   const supabase = createServiceClient();
 
-  if (userId) {
-    // Authenticated: upsert so the same user is recorded only once per checklist.
-    // The DB trigger increments download_count only on a real INSERT.
-    const { error } = await supabase
-      .from("downloads")
-      .upsert(
-        { user_id: userId, checklist_id: checklistId },
-        { onConflict: "user_id,checklist_id", ignoreDuplicates: true },
-      );
-    if (error) throw new ApiError(error.message, 500, "download_record_failed");
-  } else {
-    // Anonymous: insert with user_id = null; each download is a separate row.
-    // The DB trigger increments download_count on every insert.
-    const { error } = await supabase
-      .from("downloads")
-      .insert({ user_id: null, checklist_id: checklistId });
-    if (error) throw new ApiError(error.message, 500, "download_record_failed");
+  // Plain INSERT for both authenticated and anonymous users.
+  // The partial unique index (WHERE user_id IS NOT NULL) prevents authenticated
+  // users from being recorded twice. Anonymous rows (user_id = null) are always
+  // inserted as new rows since the partial index doesn't constrain nulls.
+  // The downloads_increment_count trigger fires on every real INSERT and
+  // increments marketplace_checklists.download_count atomically.
+  const { error } = await supabase
+    .from("downloads")
+    .insert({ user_id: userId ?? null, checklist_id: checklistId });
+
+  if (error) {
+    // 23505 = unique_violation: authenticated user already downloaded — ignore.
+    if (error.code === "23505") return;
+    throw new ApiError(error.message, 500, "download_record_failed");
   }
 }
 

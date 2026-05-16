@@ -39,8 +39,8 @@ final class MarketplaceAPIService: ObservableObject {
         try await client.fetchChecklistDetail(id: id)
     }
 
-    func downloadChecklist(id: UUID) async throws -> MarketplaceChecklist {
-        try await client.downloadChecklist(id: id)
+    func downloadChecklist(id: UUID, accessToken: String?) async throws -> MarketplaceChecklist {
+        try await client.downloadChecklist(id: id, accessToken: accessToken)
     }
 
     func publishChecklist(_ request: MarketplacePublishRequest, accessToken: String) async throws -> MarketplaceChecklist {
@@ -69,7 +69,7 @@ protocol MarketplaceClient {
     func fetchFeaturedChecklists() async throws -> [MarketplaceChecklist]
     func fetchChecklists(categoryId: UUID) async throws -> [MarketplaceChecklist]
     func fetchChecklistDetail(id: UUID) async throws -> MarketplaceChecklist
-    func downloadChecklist(id: UUID) async throws -> MarketplaceChecklist
+    func downloadChecklist(id: UUID, accessToken: String?) async throws -> MarketplaceChecklist
     func publishChecklist(_ request: MarketplacePublishRequest, accessToken: String) async throws -> MarketplaceChecklist
     func updateChecklist(id: UUID, _ request: MarketplacePublishRequest, accessToken: String) async throws -> MarketplaceChecklist
     func rateChecklist(id: UUID, rating: Int, accessToken: String) async throws -> MarketplaceChecklist
@@ -138,7 +138,7 @@ final class HTTPMarketplaceClient: MarketplaceClient {
         self.session = session
         self.decoder = JSONDecoder()
         self.decoder.keyDecodingStrategy = .convertFromSnakeCase
-        self.decoder.dateDecodingStrategy = .custom(MarketplaceDateDecoding.decode)
+        self.decoder.dateDecodingStrategy = .custom { try MarketplaceDateDecoding.decode($0) }
         self.encoder = JSONEncoder()
         self.encoder.keyEncodingStrategy = .convertToSnakeCase
     }
@@ -159,8 +159,12 @@ final class HTTPMarketplaceClient: MarketplaceClient {
         try await fetch("marketplace/checklists/\(id.uuidString)")
     }
 
-    func downloadChecklist(id: UUID) async throws -> MarketplaceChecklist {
-        try await fetch("marketplace/checklists/\(id.uuidString)/download", method: "POST")
+    func downloadChecklist(id: UUID, accessToken: String?) async throws -> MarketplaceChecklist {
+        try await fetch(
+            "marketplace/checklists/\(id.uuidString)/download",
+            method: "POST",
+            accessToken: accessToken
+        )
     }
 
     func publishChecklist(_ request: MarketplacePublishRequest, accessToken: String) async throws -> MarketplaceChecklist {
@@ -287,7 +291,7 @@ final class LocalMarketplaceClient: MarketplaceClient {
         return checklist
     }
 
-    func downloadChecklist(id: UUID) async throws -> MarketplaceChecklist {
+    func downloadChecklist(id: UUID, accessToken: String?) async throws -> MarketplaceChecklist {
         try await fetchChecklistDetail(id: id)
     }
 
@@ -445,8 +449,9 @@ private enum MarketplaceSampleData {
             description: "Kısa kaçamaklar için yola çıkmadan önce hızlı ama kapsamlı kontrol.",
             iconName: "car.side",
             language: "tr",
+            version: 1,
             itemCount: 8,
-            version: 1, downloadCount: 128,
+            downloadCount: 128,
             averageRating: 4.8,
             ratingCount: 24,
             items: [
@@ -501,8 +506,9 @@ private enum MarketplaceSampleData {
             description: "Az ekipmanla iki kişilik kamp mutfağı hazırlığı.",
             iconName: "flame",
             language: "tr",
+            version: 1,
             itemCount: 6,
-            version: 1, downloadCount: 86,
+            downloadCount: 86,
             averageRating: 4.5,
             ratingCount: 15,
             items: [
@@ -547,8 +553,9 @@ private enum MarketplaceSampleData {
             description: "A practical pre-drive checklist for long highway trips.",
             iconName: "wrench.and.screwdriver",
             language: "en",
+            version: 1,
             itemCount: 7,
-            version: 1, downloadCount: 214,
+            downloadCount: 214,
             averageRating: 4.7,
             ratingCount: 41,
             items: [
@@ -598,8 +605,9 @@ private enum MarketplaceSampleData {
             description: "Günübirlik tekne planları için güvenlik odaklı hızlı kontrol.",
             iconName: "ferry",
             language: "tr",
+            version: 1,
             itemCount: 5,
-            version: 1, downloadCount: 52,
+            downloadCount: 52,
             averageRating: 4.3,
             ratingCount: 9,
             items: [

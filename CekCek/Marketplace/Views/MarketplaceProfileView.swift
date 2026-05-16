@@ -5,6 +5,7 @@ struct MarketplaceProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var displayName = ""
     @State private var isAuthenticating = false
+    @State private var isSavingDisplayName = false
     @State private var errorMessage: String?
 
     var body: some View {
@@ -89,10 +90,16 @@ struct MarketplaceProfileView: View {
                 .textFieldStyle(.roundedBorder)
                 .disabled(!authService.isAuthenticated)
 
-                Button(String(localized: "common.save")) {
-                    authService.updateDisplayName(displayName)
+                Button {
+                    Task { await saveDisplayName() }
+                } label: {
+                    if isSavingDisplayName {
+                        ProgressView()
+                    } else {
+                        Text(String(localized: "common.save"))
+                    }
                 }
-                .disabled(!authService.isAuthenticated || displayName.trimmingCharacters(in: .whitespaces).isEmpty)
+                .disabled(!canSaveDisplayName)
                 .padding(.top, 8)
 
                 Divider()
@@ -158,10 +165,16 @@ struct MarketplaceProfileView: View {
             )
             .disabled(!authService.isAuthenticated)
 
-            Button(String(localized: "common.save")) {
-                authService.updateDisplayName(displayName)
+            Button {
+                Task { await saveDisplayName() }
+            } label: {
+                if isSavingDisplayName {
+                    ProgressView()
+                } else {
+                    Text(String(localized: "common.save"))
+                }
             }
-            .disabled(!authService.isAuthenticated || displayName.trimmingCharacters(in: .whitespaces).isEmpty)
+            .disabled(!canSaveDisplayName)
         }
     }
 
@@ -193,6 +206,12 @@ struct MarketplaceProfileView: View {
         }
     }
 
+    private var canSaveDisplayName: Bool {
+        authService.isAuthenticated
+            && !isSavingDisplayName
+            && !displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     // ── Auth ──────────────────────────────────────────────────────────────
     private func authenticate() async {
         isAuthenticating = true
@@ -201,6 +220,18 @@ struct MarketplaceProfileView: View {
         do {
             try await authService.ensureAuthenticated()
             displayName = authService.currentUser?.displayName ?? ""
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func saveDisplayName() async {
+        isSavingDisplayName = true
+        errorMessage = nil
+        defer { isSavingDisplayName = false }
+        do {
+            try await authService.updateDisplayName(displayName)
+            displayName = authService.currentUser?.displayName ?? displayName
         } catch {
             errorMessage = error.localizedDescription
         }

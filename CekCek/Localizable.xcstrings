@@ -1603,6 +1603,38 @@
         }
       }
     },
+    "marketplace.upload.update" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Update Listing"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Güncelle"
+          }
+        }
+      }
+    },
+    "marketplace.upload.updateNotice" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This checklist is already on the Marketplace. Publishing will update the existing listing and increment its version."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu checklist zaten Marketplace'de mevcut. Göndermek mevcut listeyi güncelleyecek ve versiyonu artıracak."
+          }
+        }
+      }
+    },
     "marketplace.upload.success" : {
       "localizations" : {
         "en" : {
