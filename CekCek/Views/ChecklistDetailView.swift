@@ -10,6 +10,8 @@ struct ChecklistDetailView: View {
     @State private var showingMarketplaceInfo = false
     @State private var editingItem: ChecklistItem?
     @State private var quickAddText = ""
+    @State private var showSaveError = false
+    @State private var saveErrorMessage = ""
     #if os(iOS)
     @State private var editMode = EditMode.inactive
     #endif
@@ -171,6 +173,11 @@ struct ChecklistDetailView: View {
                 MarketplaceInfoSheet(marketplaceSourceId: marketplaceId)
             }
         }
+        .alert(String(localized: "common.saveFailed"), isPresented: $showSaveError) {
+            Button(String(localized: "common.done")) {}
+        } message: {
+            Text(saveErrorMessage)
+        }
         .cloudKitSyncRefresh()
     }
 
@@ -195,11 +202,27 @@ struct ChecklistDetailView: View {
         for item in checklist.items ?? [] {
             item.isChecked = false
         }
+
+        do {
+            try modelContext.save()
+        } catch {
+            modelContext.rollback()
+            saveErrorMessage = error.localizedDescription
+            showSaveError = true
+        }
     }
 
     private func resetAll() {
         for item in checklist.items ?? [] {
             item.isChecked = false
+        }
+
+        do {
+            try modelContext.save()
+        } catch {
+            modelContext.rollback()
+            saveErrorMessage = error.localizedDescription
+            showSaveError = true
         }
     }
 

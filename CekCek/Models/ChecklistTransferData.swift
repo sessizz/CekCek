@@ -65,12 +65,7 @@ extension ChecklistTransferData: Transferable {
     static var transferRepresentation: some TransferRepresentation {
         FileRepresentation(exportedContentType: .cekcek) { transferData in
             let data = try transferData.encodeToJSON()
-            let sanitizedTitle = transferData.title
-                .replacingOccurrences(of: "/", with: "-")
-                .replacingOccurrences(of: ":", with: "-")
-            let url = FileManager.default.temporaryDirectory
-                .appendingPathComponent(sanitizedTitle)
-                .appendingPathExtension("cekcek")
+            let url = transferData.makeTemporaryFileURL()
             try data.write(to: url)
             return SentTransferredFile(url)
         }
@@ -87,14 +82,26 @@ extension ChecklistTransferData {
 
     func temporaryFileURL() throws -> URL {
         let data = try encodeToJSON()
-        let sanitizedTitle = title
-            .replacingOccurrences(of: "/", with: "-")
-            .replacingOccurrences(of: ":", with: "-")
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent(sanitizedTitle)
-            .appendingPathExtension("cekcek")
+        let url = makeTemporaryFileURL()
         try data.write(to: url)
         return url
+    }
+
+    fileprivate func makeTemporaryFileURL() -> URL {
+        let sanitizedTitle = sanitizedFileName(from: title)
+        return FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(sanitizedTitle)-\(id.uuidString)")
+            .appendingPathExtension("cekcek")
+    }
+
+    private func sanitizedFileName(from title: String) -> String {
+        let invalidCharacters = CharacterSet(charactersIn: "/\\?%*|\"<>:").union(.newlines)
+        let components = title
+            .components(separatedBy: invalidCharacters)
+            .joined(separator: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let collapsed = components.isEmpty ? "Checklist" : components
+        return String(collapsed.prefix(80))
     }
 }
 

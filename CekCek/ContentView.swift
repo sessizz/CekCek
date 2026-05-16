@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var showImportSuccess = false
     @State private var showImportError = false
     @State private var importErrorMessage = ""
+    @State private var showTemporaryStorageWarning = false
 
     var body: some View {
         TabView {
@@ -23,6 +24,11 @@ struct ContentView: View {
         }
         .onOpenURL { url in
             handleImport(url: url)
+        }
+        .onAppear {
+            if cloudKitSyncMonitor.storageMode == .inMemoryFallback {
+                showTemporaryStorageWarning = true
+            }
         }
         .safeAreaInset(edge: .top) {
             if cloudKitSyncMonitor.shouldShowIssueBanner {
@@ -45,6 +51,11 @@ struct ContentView: View {
             Button(String(localized: "common.done")) {}
         } message: {
             Text(importErrorMessage)
+        }
+        .alert(String(localized: "storage.temporary.title"), isPresented: $showTemporaryStorageWarning) {
+            Button(String(localized: "common.done")) {}
+        } message: {
+            Text(String(localized: "storage.temporary.message"))
         }
     }
 

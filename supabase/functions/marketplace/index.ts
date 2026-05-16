@@ -22,6 +22,10 @@ type RateChecklistRequest = {
   rating?: number;
 };
 
+const anonymousDownloadAttempts = new Map<string, number[]>();
+const anonymousDownloadLimit = 20;
+const anonymousDownloadWindowMs = 60 * 60 * 1000;
+
 const checklistSelect = `
   id,
   category_id,
@@ -157,9 +161,12 @@ Deno.serve(async (req) => {
     ) {
       const checklistId = segments[1];
       const userId = await optionalUserIdFromAuthorization(req);
+      if (!userId) {
+        rateLimitAnonymousDownload(req);
+      }
       // Always record in downloads table.
-      // • Authenticated: upsert (ignoreDuplicates) → trigger increments count on first download only.
-      // • Anonymous: plain insert with user_id=null → trigger always increments count.
+      // • Authenticated: unique constraint prevents counting the same user twice.
+      // • Anonymous: in-memory rate limit reduces abuse; user_id=null rows increment count.
       await recordDownload(userId, checklistId);
 
       const checklist = await fetchChecklistDetail(supabase, checklistId);
@@ -333,43 +340,43 @@ async function updateChecklist(userId: string, checklistId: string, body: Publis
   // Verify ownership
   const { data: existing, error: fetchError } = await supabase
     .from("marketplace_checklists")
-    .select("id, author_id, version")
+    .select("id, author_id")
     .eq("id", checklistId)
     .single();
 
   if (fetchError || !existing) throw new ApiError("Checklist not found.", 404, "checklist_not_found");
   if (existing.author_id !== userId) throw new ApiError("Not authorized.", 403, "not_authorized");
 
-  const { error: updateError } = await supabase
-    .from("marketplace_checklists")
-    .update({
-      title,
-      description,
-      icon_name: iconName,
-      category_id: body.category_id ?? null,
-      language,
-      item_count: items.length,
-      version: (existing.version as number) + 1,
-      status: "published",
-    })
-    .eq("id", checklistId);
+  const { error: updateError } = await supabase.rpc("update_marketplace_checklist_transaction", {
+    p_user_id: userId,
+    p_checklist_id: checklistId,
+    p_title: title,
+    p_description: description,
+    p_icon_name: iconName,
+    p_category_id: body.category_id ?? null,
+    p_language: language,
+    p_items: items,
+  });
 
   if (updateError) throw new ApiError(updateError.message, 500, "update_failed");
 
-  // Replace items
-  await supabase.from("marketplace_checklist_items").delete().eq("checklist_id", checklistId);
-
-  const { error: itemsError } = await supabase
-    .from("marketplace_checklist_items")
-    .insert(items.map((item) => ({
-      checklist_id: checklistId,
-      title: item.title,
-      sort_order: item.sort_order,
-    })));
-
-  if (itemsError) throw new ApiError(itemsError.message, 500, "update_items_failed");
-
   return await fetchChecklistDetail(supabase, checklistId);
+}
+
+function rateLimitAnonymousDownload(req: Request): void {
+  const forwardedFor = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const clientId = forwardedFor || req.headers.get("cf-connecting-ip") || "unknown";
+  const now = Date.now();
+  const windowStart = now - anonymousDownloadWindowMs;
+  const recentAttempts = (anonymousDownloadAttempts.get(clientId) ?? [])
+    .filter((timestamp) => timestamp >= windowStart);
+
+  if (recentAttempts.length >= anonymousDownloadLimit) {
+    throw new ApiError("Anonymous download rate limit reached.", 429, "anonymous_download_rate_limited");
+  }
+
+  recentAttempts.push(now);
+  anonymousDownloadAttempts.set(clientId, recentAttempts);
 }
 
 async function recordDownload(userId: string | null, checklistId: string): Promise<void> {

@@ -35,8 +35,12 @@ enum DefaultDataSeeder {
             }
         }
 
-        try? context.save()
-        UserDefaults.standard.set(true, forKey: "hasSeededDefaultData")
+        do {
+            try context.save()
+            UserDefaults.standard.set(true, forKey: "hasSeededDefaultData")
+        } catch {
+            print("Default data seeding failed: \(error.localizedDescription)")
+        }
     }
 
     /// Removes duplicate default checklists (keeps oldest per titleKey).
