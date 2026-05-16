@@ -593,6 +593,54 @@
         }
       }
     },
+    "cloudkit.status.notAuthenticated" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud is not signed in on this device."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu cihazda iCloud oturumu acik degil."
+          }
+        }
+      }
+    },
+    "cloudkit.status.partialFailure" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud could not sync part of the latest change and will retry automatically."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud son degisikligin bir bolumunu senkronize edemedi ve otomatik olarak yeniden deneyecek."
+          }
+        }
+      }
+    },
+    "cloudkit.status.quotaExceeded" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud storage is full. Free up iCloud storage and try again."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud depolama alani dolu. iCloud alanini bosaltip tekrar deneyin."
+          }
+        }
+      }
+    },
     "cloudkit.status.reason" : {
       "localizations" : {
         "en" : {
@@ -605,6 +653,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Neden"
+          }
+        }
+      }
+    },
+    "cloudkit.status.temporaryDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The last iCloud operation reported a temporary issue. Recent successful syncs are still shown below."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son iCloud islemi gecici bir sorun bildirdi. Son basarili senkronizasyon asagida gorunur."
+          }
+        }
+      }
+    },
+    "cloudkit.status.temporaryIssue" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud sync is temporarily unavailable and will retry automatically."
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud senkronizasyonu gecici olarak kullanilamiyor ve otomatik olarak yeniden denenecek."
+          }
+        }
+      }
+    },
+    "cloudkit.status.temporaryTitle" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud will retry sync"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iCloud senkronizasyonu tekrar deneyecek"
           }
         }
       }

@@ -133,6 +133,10 @@ extension CloudKitSyncMonitor {
             return "exclamationmark.icloud"
         }
 
+        if lastWarningMessage != nil {
+            return "clock.badge.exclamationmark"
+        }
+
         switch storageMode {
         case .cloudKit:
             return isSyncInProgress ? "arrow.triangle.2.circlepath.icloud" : "checkmark.icloud"
@@ -145,6 +149,10 @@ extension CloudKitSyncMonitor {
 
     var statusColor: Color {
         if lastErrorMessage != nil {
+            return .orange
+        }
+
+        if lastWarningMessage != nil {
             return .orange
         }
 
@@ -161,6 +169,10 @@ extension CloudKitSyncMonitor {
             return String(localized: "cloudkit.status.lastError")
         }
 
+        if lastWarningMessage != nil {
+            return String(localized: "cloudkit.status.temporaryTitle")
+        }
+
         switch storageMode {
         case .cloudKit:
             return String(localized: "cloudkit.status.connected")
@@ -174,6 +186,10 @@ extension CloudKitSyncMonitor {
     var statusDescription: String {
         if lastErrorMessage != nil {
             return String(localized: "cloudkit.status.banner.error")
+        }
+
+        if lastWarningMessage != nil {
+            return String(localized: "cloudkit.status.temporaryDescription")
         }
 
         switch storageMode {
@@ -212,10 +228,10 @@ extension CloudKitSyncMonitor {
     }
 
     var lastVisibleErrorMessage: String? {
-        lastErrorMessage ?? startupErrorMessage
+        lastErrorMessage ?? lastWarningMessage ?? startupErrorMessage
     }
 
     var debugDetails: String? {
-        startupErrorMessage ?? lastErrorMessage
+        startupErrorMessage ?? lastDebugDetails ?? lastErrorMessage ?? lastWarningMessage
     }
 }
