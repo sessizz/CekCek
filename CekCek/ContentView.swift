@@ -10,17 +10,16 @@ struct ContentView: View {
     @State private var importErrorMessage = ""
 
     var body: some View {
-        NavigationSplitView {
-            ChecklistListView(selectedChecklist: $selectedChecklist)
-            #if os(macOS)
-                .navigationSplitViewColumnWidth(min: 220, ideal: 280)
-            #endif
-        } detail: {
-            if let checklist = selectedChecklist {
-                ChecklistDetailView(checklist: checklist)
-            } else {
-                EmptyStateView()
-            }
+        TabView {
+            checklistNavigation
+                .tabItem {
+                    Label(String(localized: "tab.myLists"), systemImage: "checklist")
+                }
+
+            MarketplaceTabView()
+                .tabItem {
+                    Label(String(localized: "marketplace.title"), systemImage: "shippingbox")
+                }
         }
         .onOpenURL { url in
             handleImport(url: url)
@@ -49,6 +48,21 @@ struct ContentView: View {
         }
     }
 
+    private var checklistNavigation: some View {
+        NavigationSplitView {
+            ChecklistListView(selectedChecklist: $selectedChecklist)
+            #if os(macOS)
+                .navigationSplitViewColumnWidth(min: 220, ideal: 280)
+            #endif
+        } detail: {
+            if let checklist = selectedChecklist {
+                ChecklistDetailView(checklist: checklist)
+            } else {
+                EmptyStateView()
+            }
+        }
+    }
+
     private func handleImport(url: URL) {
         do {
             try ChecklistImporter.importChecklist(from: url, context: modelContext)
@@ -64,4 +78,6 @@ struct ContentView: View {
     ContentView()
         .modelContainer(for: [Checklist.self, ChecklistItem.self, CompletionRecord.self], inMemory: true)
         .environmentObject(CloudKitSyncMonitor())
+        .environmentObject(MarketplaceAuthService())
+        .environmentObject(MarketplaceAPIService())
 }

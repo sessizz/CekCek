@@ -9,6 +9,8 @@ struct CekCekApp: App {
 
     let modelContainer: ModelContainer
     let cloudKitSyncMonitor: CloudKitSyncMonitor
+    let marketplaceAuthService: MarketplaceAuthService
+    let marketplaceAPIService: MarketplaceAPIService
 
     init() {
         let syncMonitor = CloudKitSyncMonitor()
@@ -55,6 +57,8 @@ struct CekCekApp: App {
 
         self.cloudKitSyncMonitor = syncMonitor
         self.modelContainer = container
+        self.marketplaceAuthService = MarketplaceAuthService()
+        self.marketplaceAPIService = MarketplaceAPIService()
         let context = ModelContext(container)
         DefaultDataSeeder.seedIfNeeded(context: context)
     }
@@ -63,6 +67,8 @@ struct CekCekApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(cloudKitSyncMonitor)
+                .environmentObject(marketplaceAuthService)
+                .environmentObject(marketplaceAPIService)
                 #if os(macOS)
                 .handlesExternalEvents(preferring: Set(arrayLiteral: "file"), allowing: Set(arrayLiteral: "file"))
                 #endif
@@ -72,6 +78,9 @@ struct CekCekApp: App {
                     #else
                     UIApplication.shared.registerForRemoteNotifications()
                     #endif
+                }
+                .task {
+                    await marketplaceAuthService.restoreSessionIfNeeded()
                 }
         }
         #if os(macOS)

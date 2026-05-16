@@ -19,6 +19,8 @@ struct ChecklistRowView: View {
         return Double(checkedCount) / Double(totalCount)
     }
     private var isComplete: Bool { totalCount > 0 && checkedCount == totalCount }
+    private var isMarketplaceDownload: Bool { checklist.marketplaceSourceId != nil }
+    private var marketplaceGold: Color { Color(red: 1.0, green: 0.72, blue: 0.16) }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -34,8 +36,23 @@ struct ChecklistRowView: View {
                 }
             }
             .frame(width: 36, height: 36)
-            .background(checklist.iconName.isEmoji ? Color.clear : Color.accentColor)
+            .background {
+                RoundedRectangle(cornerRadius: 9)
+                    .fill(iconBackgroundColor)
+            }
+            .overlay {
+                if isMarketplaceDownload {
+                    RoundedRectangle(cornerRadius: 9)
+                        .strokeBorder(marketplaceGold.opacity(0.72), lineWidth: 1)
+                }
+            }
             .clipShape(RoundedRectangle(cornerRadius: 9))
+            .shadow(
+                color: isMarketplaceDownload
+                    ? marketplaceGold.opacity(0.72)
+                    : .clear,
+                radius: 10, x: 0, y: 3
+            )
 
             // Title + subtitle
             VStack(alignment: .leading, spacing: 3) {
@@ -65,5 +82,13 @@ struct ChecklistRowView: View {
             }
         }
         .padding(.vertical, 4)
+    }
+
+    private var iconBackgroundColor: Color {
+        if checklist.iconName.isEmoji {
+            return isMarketplaceDownload ? marketplaceGold.opacity(0.16) : .clear
+        }
+
+        return isMarketplaceDownload ? Color.accentColor.opacity(0.92) : Color.accentColor
     }
 }

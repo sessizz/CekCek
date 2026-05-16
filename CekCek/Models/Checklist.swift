@@ -9,6 +9,8 @@ final class Checklist {
     var iconName: String = "checklist"
     var sortOrder: Int = 0
     var isDefault: Bool = true
+    var marketplaceSourceId: UUID?   // set when downloaded from marketplace
+    var marketplacePublishedId: UUID? // set when published to marketplace
     var createdAt: Date = Date()
 
     @Relationship(deleteRule: .cascade, inverse: \ChecklistItem.checklist)
